@@ -1,0 +1,5 @@
+# Local development: everything above + the libraries used only for evaluation charts.
+-r requirements.txt
+matplotlib>=3.8.0,<3.10
+seaborn>=0.13.0,<0.14
+scipy>=1.12.0,<1.15

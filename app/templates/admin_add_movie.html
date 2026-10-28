@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Add Movie — WatchNext{% endblock %}
+{% block content %}
+<div class="admin-page">
+  <div class="admin-header">
+    <div>
+      <a href="{{ url_for('moderator.dashboard') }}" class="back-link">← Back to Dashboard</a>
+      <h1>Add Movie</h1>
+      <p>New movies are picked up the next time the recommendation model is retrained.</p>
+    </div>
+  </div>
+
+  <div class="form-card" id="tab-single">
+    <form method="POST" action="{{ url_for('moderator.add_movie') }}" class="movie-form" onsubmit="return validateYear()">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Title *</label>
+          <input type="text" name="title" value="{{ form.title or '' }}" placeholder="e.g. The Dark Knight" required>
+        </div>
+        <div class="form-group">
+          <label>Year * <small id="yearHint"></small></label>
+          <input type="number" name="year" id="yearInput" value="{{ form.year or '' }}" placeholder="2024" min="1888" required>
+          <span class="field-error" id="yearError"></span>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Genre * <small>separate with |</small></label>
+          <input type="text" name="genre" value="{{ form.genre or '' }}" placeholder="Action|Drama|Thriller" required>
+        </div>
+        <div class="form-group">
+          <label>Rating * <small>0–10</small></label>
+          <input type="number" name="rating" value="{{ form.rating or '' }}" placeholder="8.5" step="0.1" min="0" max="10" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Director</label>
+          <input type="text" name="director" value="{{ form.director or '' }}" placeholder="e.g. Christopher Nolan">
+        </div>
+        <div class="form-group">
+          <label>Runtime <small>minutes</small></label>
+          <input type="number" name="runtime" value="{{ form.runtime or '' }}" placeholder="120">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Cast <small>separate with |</small></label>
+        <input type="text" name="cast" value="{{ form.cast or '' }}" placeholder="Actor One|Actor Two|Actor Three">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Language</label>
+          <input type="text" name="language" value="{{ form.language or '' }}" placeholder="English">
+        </div>
+        <div class="form-group">
+          <label>YouTube Trailer ID <small>e.g. EXeTwQWrcwY</small></label>
+          <input type="text" name="trailer_id" value="{{ form.trailer_id or '' }}" placeholder="EXeTwQWrcwY">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Description *</label>
+        <textarea name="description" rows="4" placeholder="Plot summary..." required>{{ form.description or '' }}</textarea>
+      </div>
+      <div class="form-group">
+        <label>Poster URL <small>any image URL</small></label>
+        <input type="url" name="poster_url" value="{{ form.poster_url or '' }}" placeholder="https://image.tmdb.org/t/p/w500/...">
+      </div>
+      <div class="form-actions">
+        <a href="{{ url_for('moderator.dashboard') }}" class="btn-secondary">Cancel</a>
+        <button type="submit" class="btn-primary">Add Movie →</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const currentYear = new Date().getFullYear();
+const yearInput   = document.getElementById('yearInput');
+const yearHint    = document.getElementById('yearHint');
+const yearError   = document.getElementById('yearError');
+
+yearHint.textContent = `1888–${currentYear}`;
+yearInput.setAttribute('max', currentYear);
+
+function validateYear() {
+  const val = parseInt(yearInput.value);
+  if (!val) return true;
+  if (val < 1888) { yearError.textContent = 'Year must be 1888 or later.'; yearInput.focus(); return false; }
+  if (val > currentYear) { yearError.textContent = `Year cannot be in the future. Max allowed: ${currentYear}.`; yearInput.focus(); return false; }
+  yearError.textContent = '';
+  return true;
+}
+</script>
+{% endblock %}

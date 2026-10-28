@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Genres — WatchNext{% endblock %}
+{% block content %}
+<div class="admin-page">
+  <div class="admin-header">
+    <div>
+      <a href="{{ url_for('moderator.dashboard') }}" class="back-link">← Back to Dashboard</a>
+      <h1>Genre Management</h1>
+    </div>
+  </div>
+
+  <div class="form-card" style="max-width:420px">
+    <form method="POST" action="{{ url_for('moderator.add_genre') }}" class="movie-form">
+      <div class="form-group">
+        <label>New genre name</label>
+        <input type="text" name="genre_name" placeholder="e.g. Musical" required maxlength="50">
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn-primary">Add Genre</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="admin-table-section">
+    <div class="table-header"><h2>All Genres ({{ genres|length }})</h2></div>
+    <div class="table-wrapper">
+      <table class="admin-table">
+        <thead><tr><th>ID</th><th>Name</th><th>Actions</th></tr></thead>
+        <tbody>
+          {% for g in genres %}
+          <tr>
+            <td><span class="id-badge">{{ g.genre_id }}</span></td>
+            <td>{{ g.genre_name }}</td>
+            <td class="actions-cell">
+              <form method="POST" action="{{ url_for('moderator.delete_genre', genre_id=g.genre_id) }}"
+                    onsubmit="return confirm('Delete genre {{ g.genre_name }}? This removes it from all movies.')">
+                <button type="submit" class="btn-delete">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

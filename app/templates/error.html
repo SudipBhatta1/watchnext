@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ code }} — WatchNext{% endblock %}
+{% block content %}
+<div class="admin-page" style="text-align:center;padding:4rem 1rem">
+  <h1 style="font-size:4rem;margin-bottom:0.5rem">{{ code }}</h1>
+  <p style="color:var(--muted);font-size:1.1rem">{{ message }}</p>
+  <a href="{{ url_for('public.index') }}" class="btn-primary" style="margin-top:1.5rem;display:inline-block">Back to Home</a>
+</div>
+{% endblock %}

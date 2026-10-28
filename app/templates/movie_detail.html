@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% block title %}{{ movie.title }} — WatchNext{% endblock %}
+{% block content %}
+<div class="detail-page">
+
+  <!-- HERO BANNER -->
+  <div class="detail-banner">
+    <div class="detail-banner-bg" style="background:linear-gradient(135deg,hsl({{movie.id*37%360}},30%,18%),hsl({{(movie.id*37+80)%360}},40%,25%))"></div>
+    <div class="detail-banner-inner">
+      <a href="{{ url_for('public.index') }}" class="back-link">← Back to Home</a>
+      <div class="detail-layout">
+
+        <!-- POSTER -->
+        <div class="detail-poster-wrap">
+          <div class="detail-poster">
+            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}"
+                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+            <div class="big-poster-fallback" style="display:none;background:linear-gradient(135deg,hsl({{movie.id*37%360}},45%,40%),hsl({{(movie.id*37+80)%360}},55%,50%))">{{ movie.title }}</div>
+          </div>
+
+          <!-- Watchlist button -->
+          <button class="btn-wl-detail" id="wlDetailBtn" data-movie-id="{{movie.id}}"
+                  onclick="toggleWatchlist({{movie.id}},{{movie.title|tojson}},{{movie.poster_url|tojson}})">
+            🔖 Add to Watchlist
+          </button>
+
+          <!-- Thumbs feedback — ONLY HERE on movie detail, nowhere else -->
+          {% if username %}
+          <div class="detail-thumbs" id="detail-thumb-{{movie.id}}">
+            <span class="detail-thumbs-label">Was this a good pick?</span>
+            <div class="detail-thumbs-row">
+              <button class="thumb-btn thumb-up thumb-lg"
+                      onclick="detailThumbsFeedback({{movie.id}},'up')"
+                      title="Yes, I liked this">👍 Like</button>
+              <button class="thumb-btn thumb-down thumb-lg"
+                      onclick="detailThumbsFeedback({{movie.id}},'down')"
+                      title="Not for me">👎 Not for me</button>
+            </div>
+          </div>
+          {% else %}
+          <p class="empty-msg" style="margin-top:.75rem"><a href="{{ url_for('auth.login') }}">Log in</a> to give feedback on this movie.</p>
+          {% endif %}
+        </div>
+
+        <!-- INFO -->
+        <div class="detail-info">
+          <div class="detail-genres">
+            {% for g in movie.genre.split('|') %}<span class="genre-tag light">{{ g }}</span>{% endfor %}
+          </div>
+          <h1 class="detail-title">{{ movie.title }}</h1>
+          <div class="detail-meta-row">
+            <span class="meta-pill">{{ movie.year }}</span>
+            {% if movie.runtime %}<span class="meta-pill">{{ movie.runtime }} min</span>{% endif %}
+            {% if movie.language %}<span class="meta-pill">{{ movie.language }}</span>{% endif %}
+          </div>
+          {% if movie.director %}
+          <div class="detail-crew">
+            <span class="crew-label">Director</span>
+            <span class="crew-value">{{ movie.director }}</span>
+          </div>
+          {% endif %}
+          <p class="detail-description">{{ movie.description }}</p>
+          {% if cast_list %}
+          <div class="cast-section">
+            <p class="cast-label">Cast</p>
+            <div class="cast-list">
+              {% for actor in cast_list %}
+              <div class="cast-chip">
+                <div class="cast-avatar">{{ actor[0] }}</div>
+                <span>{{ actor }}</span>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRAILER -->
+  {% if movie.trailer_id %}
+  <div class="trailer-section">
+    <div class="trailer-inner">
+      <h2 class="section-title">▶ Watch Trailer</h2>
+      <div class="trailer-wrap">
+        <iframe src="https://www.youtube.com/embed/{{ movie.trailer_id }}"
+                title="{{ movie.title }} Trailer"
+                frameborder="0" allowfullscreen
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+        </iframe>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- RATINGS & REVIEWS -->
+  <section class="recommendations-section">
+    <div class="section-header">
+      <h2>Ratings &amp; Reviews</h2>
+      <span class="movie-count">
+        {% if avg_rating and avg_rating.avg_rating %}★ {{ '%.1f'|format(avg_rating.avg_rating) }} average ({{ avg_rating.n }} rating{{ 's' if avg_rating.n != 1 }})
+        {% else %}No ratings yet{% endif %}
+      </span>
+    </div>
+
+    {% if username %}
+    <div class="form-card" style="max-width:520px;margin-bottom:1.5rem">
+      <p style="margin-top:0">Your rating</p>
+      <div id="starRow" style="display:flex;gap:.25rem;margin-bottom:1rem">
+        {% for i in range(1, 6) %}
+        <span class="star-pick" data-val="{{ i }}"
+              style="cursor:pointer;font-size:1.6rem;color:{{ '#f59e0b' if user_rating and i <= user_rating else '#3f3f46' }}"
+              onclick="submitRating({{ movie.id }}, {{ i }})">★</span>
+        {% endfor %}
+        <span id="ratingMsg" style="margin-left:.5rem;font-size:.85rem;color:var(--muted)"></span>
+      </div>
+
+      <form id="reviewForm" onsubmit="return submitReview(event, {{ movie.id }})">
+        <textarea name="review_text" rows="3" maxlength="2000" placeholder="Share your thoughts on this movie..." style="width:100%;padding:.6rem;border-radius:8px;border:1px solid #d4d4d8;background:#ffffff;color:#000000" required></textarea>
+        <button type="submit" class="btn-primary" style="margin-top:.5rem">Post Review</button>
+        <span id="reviewMsg" style="margin-left:.5rem;font-size:.85rem;color:var(--muted)"></span>
+      </form>
+    </div>
+    {% else %}
+    <p class="empty-msg"><a href="{{ url_for('auth.login') }}">Log in</a> to rate and review this movie.</p>
+    {% endif %}
+
+    <div id="reviewList">
+      {% for r in reviews %}
+      <div class="form-card" style="margin-bottom:.75rem">
+        <strong>{{ r.username }}</strong>
+        <span style="color:var(--muted);font-size:.8rem;margin-left:.5rem">{{ r.created_at }}</span>
+        <p style="margin:.4rem 0 0">{{ r.review_text }}</p>
+      </div>
+      {% else %}
+      <p class="empty-msg">No reviews yet. Be the first to share your thoughts!</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- YOU MIGHT ALSO LIKE — poster clickable, NO thumbs here -->
+  {% if recommendations %}
+  <section class="recommendations-section">
+    <div class="section-header">
+      <h2>You Might Also Like</h2>
+      <span class="movie-count">{{ recommendations|length }} picks</span>
+    </div>
+    <div class="sim-v-grid">
+      {% for rec in recommendations %}
+      <div class="sim-v-card">
+        <div class="sim-v-poster-wrap">
+          <!-- Entire poster + overlay clickable to detail -->
+          <a href="{{ url_for('public.movie_detail', movie_id=rec.id) }}" class="sim-v-poster-link">
+            <img src="{{ rec.poster_url }}" alt="{{ rec.title }}"
+                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" loading="lazy">
+            <div class="poster-fallback" style="display:none;background:linear-gradient(135deg,hsl({{loop.index*53%360}},45%,35%),hsl({{(loop.index*53+70)%360}},55%,45%))">{{ rec.title }}</div>
+            <!-- Hover overlay with View Details -->
+            <div class="sim-poster-overlay">
+              <span class="sim-view-btn">View Details</span>
+            </div>
+          </a>
+        </div>
+        <div class="sim-v-body">
+          <strong class="sim-v-title">{{ rec.title }}</strong>
+          <div class="sim-v-meta">{{ rec.year }}{% if rec.runtime %} · {{ rec.runtime }}m{% endif %}</div>
+          <div class="sim-v-genres">
+            {% for g in rec.genre.split('|') %}<span class="genre-tag small">{{ g }}</span>{% endfor %}
+          </div>
+          {% if rec.match_reasons %}
+          <div class="sim-v-why">📎 {{ rec.match_reasons | join(' · ') }}</div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+</div>
+
+<script>
+// Thumbs ONLY on the movie detail itself — not on recommendation cards
+function detailThumbsFeedback(movieId, vote) {
+  fetch('/user/feedback', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({movie_id: movieId, vote})
+  }).then(r => r.json()).then(() => {
+    const box = document.getElementById('detail-thumb-' + movieId);
+    box.innerHTML = vote === 'up'
+      ? '<span class="thumb-thanks" style="font-size:.95rem;padding:.6rem 0;display:block;text-align:center">👍 Thanks! We\'ll recommend more like this.</span>'
+      : '<span class="thumb-thanks" style="font-size:.95rem;padding:.6rem 0;display:block;text-align:center">👎 Noted! We\'ll show you better picks.</span>';
+  });
+}
+
+function submitRating(movieId, rating) {
+  fetch('/user/rate', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({movie_id: movieId, rating})
+  }).then(r => r.json()).then(data => {
+    const msg = document.getElementById('ratingMsg');
+    if (data.status === 'ok') {
+      document.querySelectorAll('#starRow .star-pick').forEach(s => {
+        s.style.color = parseInt(s.dataset.val) <= rating ? '#f59e0b' : '#3f3f46';
+      });
+      msg.textContent = `Saved! Avg ${data.average.toFixed(1)} (${data.count})`;
+    } else {
+      msg.textContent = data.message || 'Could not save rating.';
+    }
+  });
+}
+
+function submitReview(e, movieId) {
+  e.preventDefault();
+  const form = document.getElementById('reviewForm');
+  const text = form.review_text.value.trim();
+  const msg = document.getElementById('reviewMsg');
+  fetch('/user/review', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({movie_id: movieId, review_text: text})
+  }).then(r => r.json()).then(data => {
+    if (data.status === 'ok') {
+      window.location.reload();
+    } else {
+      msg.textContent = data.message || 'Could not post review.';
+    }
+  });
+  return false;
+}
+</script>
+{% endblock %}

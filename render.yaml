@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: watchnext
+    runtime: python
+    plan: free
+    # Install deps, then train the recommender from the database. the "|| echo" part means a
+    # temporarily unreachable DB never blocks a deploy (the app falls back to
+    # top-rated movies until a model exists).
+    buildCommand: pip install -r requirements.txt && (python train_model.py || echo "Model training skipped")
+    startCommand: gunicorn wsgi:app --workers 1 --threads 4 --timeout 120 --bind 0.0.0.0:$PORT
+    healthCheckPath: /healthz
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: BEHIND_PROXY
+        value: "1"
+      - key: SESSION_COOKIE_SECURE
+        value: "1"
+      - key: SKIP_EVALUATION
+        value: "1"
+      - key: DB_SSL
+        value: "1"
+      # Fill these in on the Render dashboard (from your Aiven service page):
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false

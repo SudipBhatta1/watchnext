@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Moderate Reviews — WatchNext{% endblock %}
+{% block content %}
+<div class="admin-page">
+  <div class="admin-header">
+    <div>
+      <a href="{{ url_for('moderator.dashboard') }}" class="back-link">← Back to Dashboard</a>
+      <h1>Review Moderation</h1>
+      <p>Hide reviews that violate guidelines. Hidden reviews stay in the database but no longer show on movie pages.</p>
+    </div>
+  </div>
+
+  <div class="admin-table-section">
+    <div class="table-wrapper">
+      <table class="admin-table">
+        <thead><tr><th>User</th><th>Movie</th><th>Review</th><th>Posted</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          {% for r in reviews %}
+          <tr>
+            <td>{{ r.username }}</td>
+            <td><a href="{{ url_for('public.movie_detail', movie_id=r.movie_id) }}">{{ r.movie_title }}</a></td>
+            <td style="max-width:360px">{{ r.review_text }}</td>
+            <td style="color:#71717a;font-size:0.85rem">{{ r.created_at }}</td>
+            <td>{{ r.status }}</td>
+            <td class="actions-cell">
+              {% if r.status == 'visible' %}
+              <form method="POST" action="{{ url_for('moderator.hide_review', review_id=r.review_id) }}" style="display:inline">
+                <button type="submit" class="btn-edit">Hide</button>
+              </form>
+              {% else %}
+              <form method="POST" action="{{ url_for('moderator.show_review', review_id=r.review_id) }}" style="display:inline">
+                <button type="submit" class="btn-edit">Restore</button>
+              </form>
+              {% endif %}
+              <form method="POST" action="{{ url_for('moderator.delete_review', review_id=r.review_id) }}" style="display:inline" onsubmit="return confirm('Permanently delete this review?')">
+                <button type="submit" class="btn-delete">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

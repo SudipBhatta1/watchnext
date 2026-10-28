@@ -1,0 +1,11 @@
+# Web app + model training (what the hosted server needs). Kept lean for free hosting.
+Flask>=3.0.3,<4.0
+PyMySQL>=1.1.1,<2.0
+cryptography>=43.0.1,<44.0
+python-dotenv>=1.0.1,<2.0
+pandas>=2.2.2,<2.3
+numpy>=1.26.4,<2.0
+scikit-learn>=1.5.1,<1.6
+joblib>=1.4.2,<2.0
+Werkzeug>=3.0.4,<4.0
+gunicorn>=22.0,<24.0

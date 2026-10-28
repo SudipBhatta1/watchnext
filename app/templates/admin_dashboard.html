@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard — WatchNext{% endblock %}
+{% block content %}
+<div class="admin-page">
+  <div class="admin-header">
+    <div>
+      <a href="{{ url_for('public.index') }}" class="back-link">← Back to Site</a>
+      <h1>Admin Dashboard</h1>
+      <p>Signed in as {{ session.get('name') }}</p>
+    </div>
+    <a href="{{ url_for('admin.users') }}" class="btn-primary">👥 Manage Users</a>
+    <a href="{{ url_for('moderator.dashboard') }}" class="btn-primary" style="background:#0369a1;margin-left:.5rem">🎬 Movies & Reviews</a>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card"><span class="stat-num">{{ role_counts.get('User', 0) }}</span><span class="stat-label">Users</span></div>
+    <div class="stat-card"><span class="stat-num">{{ role_counts.get('Moderator', 0) }}</span><span class="stat-label">Moderators</span></div>
+    <div class="stat-card"><span class="stat-num">{{ role_counts.get('Admin', 0) }}</span><span class="stat-label">Admins</span></div>
+    <div class="stat-card"><span class="stat-num">{{ movie_stats.total_movies }}</span><span class="stat-label">Movies</span></div>
+    <div class="stat-card"><span class="stat-num">{{ movie_stats.total_genres }}</span><span class="stat-label">Genres</span></div>
+    <div class="stat-card"><span class="stat-num">{{ movie_stats.total_ratings }}</span><span class="stat-label">Ratings</span></div>
+    <div class="stat-card"><span class="stat-num">{{ movie_stats.total_reviews }}</span><span class="stat-label">Reviews</span></div>
+  </div>
+
+  {% include "_change_recovery_code.html" %}
+
+</div>
+{% endblock %}

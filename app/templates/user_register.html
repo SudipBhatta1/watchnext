@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block title %}Sign Up — WatchNext{% endblock %}
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card">
+
+    <div class="auth-logo">
+      <span class="logo-play">▶</span>
+      <span class="logo-text">WatchNext</span>
+    </div>
+
+    <h1 class="auth-title">Create account</h1>
+    <p class="auth-sub">Join WatchNext and get personalised picks</p>
+
+    <form method="POST" action="{{ url_for('auth.register') }}" class="auth-form">
+
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" value="{{ form.username or '' }}"
+               placeholder="Choose a username"
+               autocomplete="username" required minlength="3" maxlength="30" pattern="[A-Za-z0-9_]+">
+        <span class="form-hint" id="usernameHint">3-30 characters: letters, numbers, underscore only</span>
+      </div>
+
+      <div class="form-group">
+        <label for="name">Full name</label>
+        <input type="text" id="name" name="name" value="{{ form.name or '' }}"
+               placeholder="Your name" required minlength="2" maxlength="100">
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" value="{{ form.email or '' }}"
+               placeholder="you@example.com" autocomplete="email" required maxlength="120">
+        <span class="form-hint" id="emailHint"></span>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="pw-wrap">
+          <input type="password" id="password" name="password"
+                 placeholder="At least 8 characters, 1 letter + 1 number"
+                 autocomplete="new-password" required minlength="8">
+          <button type="button" class="eye-btn" onclick="togglePw('password',this)">👁</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="confirm_password">Confirm Password</label>
+        <div class="pw-wrap">
+          <input type="password" id="confirm_password" name="confirm_password"
+                 placeholder="Repeat your password"
+                 autocomplete="new-password" required>
+          <button type="button" class="eye-btn" onclick="togglePw('confirm_password',this)">👁</button>
+        </div>
+        <span class="form-hint" id="matchHint"></span>
+      </div>
+
+      <div class="form-group">
+        <label for="recovery_code">Recovery Code (4 numbers)</label>
+        <div class="pw-wrap">
+          <input type="password" id="recovery_code" name="recovery_code" value="{{ form.recovery_code or '' }}"
+                 placeholder="e.g. 4821" autocomplete="off" required
+                 minlength="4" maxlength="4" inputmode="numeric" pattern="[0-9]{4}">
+          <button type="button" class="eye-btn" onclick="togglePw('recovery_code',this)">👁</button>
+        </div>
+        <span class="form-hint">Used to reset your password if you ever forget it. Choose 4 numbers you'll remember.</span>
+      </div>
+
+      <div class="form-group">
+        <label for="recovery_code_confirm">Confirm Recovery Code</label>
+        <div class="pw-wrap">
+          <input type="password" id="recovery_code_confirm" name="recovery_code_confirm"
+                 placeholder="Repeat your 4-digit code" autocomplete="off" required
+                 minlength="4" maxlength="4" inputmode="numeric" pattern="[0-9]{4}">
+          <button type="button" class="eye-btn" onclick="togglePw('recovery_code_confirm',this)">👁</button>
+        </div>
+        <span class="form-hint" id="codeMatchHint"></span>
+      </div>
+
+      <button type="submit" class="btn-auth">Create Account</button>
+    </form>
+
+    <p class="auth-switch">
+      Already have an account? <a href="{{ url_for('auth.login') }}">Log in</a>
+    </p>
+    <p class="auth-switch" style="margin-top:.5rem">
+      <a href="{{ url_for('public.index') }}">← Browse without login</a>
+    </p>
+
+  </div>
+</div>
+<script>
+const pw  = document.getElementById('password');
+const cf  = document.getElementById('confirm_password');
+const hint = document.getElementById('matchHint');
+function checkMatch() {
+  if (!cf.value) { hint.textContent = ''; return; }
+  if (pw.value === cf.value) { hint.textContent = '✓ Passwords match'; hint.style.color = '#16a34a'; }
+  else { hint.textContent = '✗ Passwords do not match'; hint.style.color = '#e63946'; }
+}
+pw.addEventListener('input', checkMatch);
+cf.addEventListener('input', checkMatch);
+
+const code    = document.getElementById('recovery_code');
+const codeCf  = document.getElementById('recovery_code_confirm');
+const codeHint = document.getElementById('codeMatchHint');
+function checkCodeMatch() {
+  if (!codeCf.value) { codeHint.textContent = ''; return; }
+  if (code.value === codeCf.value) { codeHint.textContent = '✓ Codes match'; codeHint.style.color = '#16a34a'; }
+  else { codeHint.textContent = '✗ Codes do not match'; codeHint.style.color = '#e63946'; }
+}
+code.addEventListener('input', checkCodeMatch);
+codeCf.addEventListener('input', checkCodeMatch);
+
+// ── Live username/email availability check (on blur) ──────────────────────
+const usernameEl = document.getElementById('username');
+const usernameHint = document.getElementById('usernameHint');
+const usernameDefaultHint = usernameHint.textContent;
+let usernameOk = true;
+
+const emailEl = document.getElementById('email');
+const emailHint = document.getElementById('emailHint');
+let emailOk = true;
+
+function checkAvailability(field, el, hintEl, defaultHint) {
+  const value = el.value.trim();
+  if (!value) { hintEl.textContent = defaultHint || ''; hintEl.style.color = ''; return; }
+  fetch(`{{ url_for('auth.check_availability') }}?field=${field}&value=${encodeURIComponent(value)}`)
+    .then(r => r.json())
+    .then(data => {
+      if (!data.valid_format) { hintEl.textContent = defaultHint || ''; hintEl.style.color = ''; return; }
+      if (data.available) {
+        hintEl.textContent = `✓ ${field === 'username' ? 'Username' : 'Email'} is available`;
+        hintEl.style.color = '#16a34a';
+        if (field === 'username') usernameOk = true; else emailOk = true;
+      } else {
+        hintEl.textContent = field === 'username' ? '✗ Username already taken' : '✗ An account with that email already exists';
+        hintEl.style.color = '#e63946';
+        if (field === 'username') usernameOk = false; else emailOk = false;
+      }
+    })
+    .catch(() => { /* network hiccup: don't block the form, server still validates on submit */ });
+}
+
+usernameEl.addEventListener('blur', () => checkAvailability('username', usernameEl, usernameHint, usernameDefaultHint));
+emailEl.addEventListener('blur', () => checkAvailability('email', emailEl, emailHint, ''));
+
+document.querySelector('.auth-form').addEventListener('submit', (e) => {
+  if (!usernameOk) {
+    e.preventDefault();
+    usernameHint.textContent = '✗ Username already taken';
+    usernameHint.style.color = '#e63946';
+    usernameEl.focus();
+  } else if (!emailOk) {
+    e.preventDefault();
+    emailHint.textContent = '✗ An account with that email already exists';
+    emailHint.style.color = '#e63946';
+    emailEl.focus();
+  }
+});
+</script>
+{% endblock %}
